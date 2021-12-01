@@ -5,20 +5,20 @@ fn main() {
     println!("Part 2: {}", find_result_2(&depths));
 }
 
-fn find_result_1(depths: &Vec<usize>) -> usize {
-    return count_increments(depths);
+fn find_result_1(depths: &[usize]) -> usize {
+    count_increments(depths)
 }
 
-fn find_result_2(depths: &Vec<usize>) -> usize {
+fn find_result_2(depths: &[usize]) -> usize {
     let windows = depths
         .windows(3)
         .map(|win| win.iter().sum::<usize>())
         .collect::<Vec<_>>();
 
-    return count_increments(&windows);
+    count_increments(&windows)
 }
 
-fn count_increments(input: &Vec<usize>) -> usize {
+fn count_increments(input: &[usize]) -> usize {
     input.windows(2).filter(|win| win[0] < win[1]).count()
 }
 
