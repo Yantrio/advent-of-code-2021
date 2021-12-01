@@ -14,7 +14,6 @@ fn find_result_2(depths: &Vec<usize>) -> usize {
         .windows(3)
         .map(|win| win.iter().sum::<usize>())
         .collect::<Vec<_>>();
-    println!("Windows {:?}", windows);
 
     return count_increments(&windows);
 }
