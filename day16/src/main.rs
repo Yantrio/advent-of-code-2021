@@ -26,7 +26,6 @@ struct Header {
 }
 
 impl Packet {
-    //
     fn from_raw<I>(source: &mut I) -> Option<Self>
     where
         I: Iterator<Item = usize>,
@@ -35,7 +34,7 @@ impl Packet {
         if header_to_parse.is_empty() {
             return None;
         }
-        let header = Header::from(header_to_parse.as_slice());
+        let header: Header = header_to_parse.as_slice().into();
 
         let mut result = match header.type_id == 4 {
             true => Packet {
@@ -117,11 +116,9 @@ where
                then the next 11 bits are a number that represents
                the number of sub-packets immediately contained by this packet.
             */
-            let mut to_parse =
-                bits_to_decimal(source.by_ref().take(11).collect::<Vec<_>>().as_slice());
-            while to_parse != 0 {
+            let to_parse = bits_to_decimal(source.by_ref().take(11).collect::<Vec<_>>().as_slice());
+            for _ in 0..to_parse {
                 result.push(Packet::from_raw(source).unwrap());
-                to_parse -= 1;
             }
         }
         _ => unreachable!(),
@@ -138,10 +135,11 @@ where
 
     loop {
         let chunk = source.take(5).collect::<Vec<_>>();
+        let data = &mut chunk[1..5].to_vec();
         if chunk[0] == 1 {
-            binary.append(&mut chunk[1..5].to_vec());
+            binary.append(data);
         } else {
-            binary.append(&mut chunk[1..5].to_vec());
+            binary.append(data);
             break;
         }
     }
@@ -163,32 +161,28 @@ fn bits_to_decimal(bits: &[usize]) -> usize {
 
 fn hex_to_bits(str: &str) -> Vec<usize> {
     str.chars().fold(vec![], |mut acc, val| {
-        acc.append(&mut to_binary(val));
+        // dont judge me!
+        acc.append(&mut match val {
+            '0' => vec![0, 0, 0, 0],
+            '1' => vec![0, 0, 0, 1],
+            '2' => vec![0, 0, 1, 0],
+            '3' => vec![0, 0, 1, 1],
+            '4' => vec![0, 1, 0, 0],
+            '5' => vec![0, 1, 0, 1],
+            '6' => vec![0, 1, 1, 0],
+            '7' => vec![0, 1, 1, 1],
+            '8' => vec![1, 0, 0, 0],
+            '9' => vec![1, 0, 0, 1],
+            'A' => vec![1, 0, 1, 0],
+            'B' => vec![1, 0, 1, 1],
+            'C' => vec![1, 1, 0, 0],
+            'D' => vec![1, 1, 0, 1],
+            'E' => vec![1, 1, 1, 0],
+            'F' => vec![1, 1, 1, 1],
+            _ => unreachable!(),
+        });
         acc
     })
-}
-
-// dont judge me!
-fn to_binary(c: char) -> Vec<usize> {
-    match c {
-        '0' => vec![0, 0, 0, 0],
-        '1' => vec![0, 0, 0, 1],
-        '2' => vec![0, 0, 1, 0],
-        '3' => vec![0, 0, 1, 1],
-        '4' => vec![0, 1, 0, 0],
-        '5' => vec![0, 1, 0, 1],
-        '6' => vec![0, 1, 1, 0],
-        '7' => vec![0, 1, 1, 1],
-        '8' => vec![1, 0, 0, 0],
-        '9' => vec![1, 0, 0, 1],
-        'A' => vec![1, 0, 1, 0],
-        'B' => vec![1, 0, 1, 1],
-        'C' => vec![1, 1, 0, 0],
-        'D' => vec![1, 1, 0, 1],
-        'E' => vec![1, 1, 1, 0],
-        'F' => vec![1, 1, 1, 1],
-        _ => unreachable!(),
-    }
 }
 
 #[cfg(test)]
